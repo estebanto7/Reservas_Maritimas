@@ -69,43 +69,35 @@ de Conglomerados)**
 
 Explicar los prinicpales resultados de cada uno de los seis apartados anteriores. 
 
+<center>
+
 # Metodología de Clusters
 
-## Antes de comenzar: Decisiones metodológicas
-- Definir las características que utilizaremos.
-- Establecer cómo comparar las variables entre ventanas.
-- Definir los criterios para evaluar la estabilidad.
+</center>
 
-## Etapa 1: Construcción de nuevas variables
+## Etapa 0. Análisis exploratorio y decisiones metodológicas
+- Calcular y analizar los factores de siniestralidad.
+- Evaluar homogeneidad por tipo de embarcación y uso.
+- Revisar primas, exposición, experiencia disponible y valores extremos.
+- Determinar si es viable y necesario aplicar credibilidad actuarial.
+- Definir la unidad de análisis y el tratamiento de los factores.
+
+## Etapa 1. Construcción de características
 - Siniestralidad acumulada.
 - Variabilidad temporal.
 - Recurrencia de siniestralidad elevada.
-- Otras características, si aportan información relevante.
+- Otras características justificadas.
 
-## Etapa 2: Construcción de conglomerados
-- Analizar distribuciones, escalas y correlaciones de las nuevas características.
-- Aplicar y comparar los métodos de agrupación.
-- Buscar grupos homogéneos e interpretables, no necesariamente estables todavía.
+## Etapa 2. Construcción de conglomerados
+- Diagnóstico de características y distancias.
+- Comparación de métodos y valores de \(k\).
+- Homogeneidad e interpretabilidad.
 
-## Etapa 3: Estabilidad temporal
-- Construir ventanas móviles de cuatro años.
-- Calcular las mismas características y repetir el agrupamiento en cada ventana.
-- Evaluar ARI, cambios de pertenencia y permanencia de los segmentos.
-- Comparar también los periodos independientes 2015–2018 y 2019–2022.
+## Etapa 3. Estabilidad temporal
+- Ventanas móviles de cuatro años.
+- ARI, permanencia y cambios de grupo.
+- Comparación entre periodos independientes.
 
-## Etapa 4: Confiabilidad actuarial
-- Identificar segmentos con primas pequeñas, experiencia limitada o pérdidas extraordinarias.
-- Evaluar cómo influyen los factores extremos en los conglomerados.
-- Verificar si contamos con información suficiente para aplicar credibilidad actuarial.
-- Considerar Bühlmann–Straub como análisis complementario de sensibilidad, si se justifican sus supuestos.
+## Etapa 4. Selección final
 
-## Etapa 5: Selección final de conglomerados
-
-**Criterios de evaluación:**
-- Homogeneidad.
-- Interpretabilidad.
-- Robustez.
-- Estabilidad temporal.
-- Confiabilidad actuarial.
-
-**Objetivo:** seleccionar y justificar los conglomerados más adecuados, reconociendo sus limitaciones.
+- Homogeneidad, interpretabilidad, robustez, estabilidad temporal y confiabilidad actuarial.
