@@ -69,35 +69,57 @@ de Conglomerados)**
 
 Explicar los prinicpales resultados de cada uno de los seis apartados anteriores. 
 
-<center>
 
-# Metodología de Clusters
+# Metodología del análisis de conglomerados
 
-</center>
+**Objetivo:** Identificar grupos homogéneos de tipos de embarcación según su comportamiento histórico de siniestralidad, para apoyar la estimación de reservas de riesgos en curso.
 
-## Etapa 0. Análisis exploratorio y decisiones metodológicas
-- Calcular y analizar los factores de siniestralidad.
-- Evaluar homogeneidad por tipo de embarcación y uso.
-- Revisar primas, exposición, experiencia disponible y valores extremos.
-- Determinar si es viable y necesario aplicar credibilidad actuarial.
-- Definir la unidad de análisis y el tratamiento de los factores.
+**Periodo:** 2015–2022 (ocho años de origen).  
+**Unidad de análisis:** Tipo de embarcación.
 
-## Etapa 1. Construcción de características
-- Siniestralidad acumulada.
-- Variabilidad temporal.
-- Recurrencia de siniestralidad elevada.
-- Otras características justificadas.
+## 3.1. Preparación y cálculo de factores de siniestralidad
 
-## Etapa 2. Construcción de conglomerados
-- Diagnóstico de características y distancias.
-- Comparación de métodos y valores de \(k\).
-- Homogeneidad e interpretabilidad.
+1. **3.1.1. Siniestralidad del mercado:** analizar la evolución del factor de siniestralidad anual.
+2. **3.1.2. Siniestralidad por tipo:** calcular los factores anuales de cada tipo de embarcación.
+3. **3.1.3. Selección de tipos:** conservar aquellos con primas positivas durante los ocho años, que representan el 96.29% de las primas emitidas del periodo.
+4. **3.1.4. Matriz de análisis:** construir una matriz de tipos de embarcación × ocho factores anuales.
 
-## Etapa 3. Estabilidad temporal
-- Ventanas móviles de cuatro años.
-- ARI, permanencia y cambios de grupo.
-- Comparación entre periodos independientes.
+## 3.2. Construcción y preparación de características
 
-## Etapa 4. Selección final
+1. **3.2.1. Formulación del problema:** definir el objetivo de agrupación y las unidades de análisis.
+2. **3.2.2. Construcción de características:**
+   - Siniestralidad acumulada: siniestros totales / primas totales.
+   - Variabilidad temporal: dispersión de los factores anuales.
+   - Recurrencia: proporción de años con siniestralidad superior a 1.
+   - Tendencia: pendiente de la siniestralidad a lo largo del tiempo.
+   - Volumen de primas: indicador auxiliar de experiencia.
+3. **3.2.3. Diagnóstico multivariado:** estudiar distribuciones, valores extremos y correlaciones de Pearson y Spearman entre características.
+4. **3.2.4. Preprocesamiento:** evaluar transformaciones y estandarizar las variables seleccionadas.
 
-- Homogeneidad, interpretabilidad, robustez, estabilidad temporal y confiabilidad actuarial.
+## 3.3. Análisis de conglomerados
+
+1. Aplicar Ward, Complete Linkage, Average Linkage y K-means.
+2. Evaluar distintos números de grupos (\(k\)).
+3. Comparar Silhouette, Calinski-Harabasz y tamaños de los grupos.
+4. Seleccionar agrupaciones considerando homogeneidad e interpretación.
+
+## 3.4. Robustez de los conglomerados
+
+1. Identificar la influencia de observaciones extremas.
+3. Evaluar sensibilidad con y sin observaciones extremas, sin eliminarlas definitivamente.
+4. Comparar los cambios en la composición de los conglomerados.
+
+## 3.5. Estabilidad temporal
+
+1. Construir ventanas móviles de cuatro años (2015–2018 hasta 2019–2022).
+2. Comparar agrupaciones entre ventanas consecutivas mediante ARI.
+3. Comparar los periodos independientes 2015–2018 y 2019–2022.
+4. Identificar tipos con agrupaciones persistentes o cambiantes.
+
+## 3.6. Interpretación y evaluación actuarial
+
+1. Caracterizar los conglomerados según su siniestralidad y variabilidad.
+2. Evaluar homogeneidad, estabilidad y volumen de experiencia.
+3. Examinar la viabilidad de aplicar credibilidad actuarial.
+4. Verificar la correspondencia temporal entre primas y siniestros.
+5. Determinar la utilidad y limitaciones de los conglomerados para estimar reservas de riesgos en curso.
