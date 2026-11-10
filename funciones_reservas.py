@@ -381,3 +381,132 @@ def evaluar_modelo(X, metodo, k_max):
         })
 
     return pd.DataFrame(resultados).round(3)
+
+
+# ---------------------------------------------------------------------------
+# Funciones para Reserva de Riesgos en Curso (RRC) y SONR
+# ---------------------------------------------------------------------------
+def calcular_rrc_exacto(
+    df: pd.DataFrame,
+    *,
+    col_prima: str = "prima_tarifa",
+    col_inicio: str = "inicio_vigencia",
+    col_fin: str = "fin_vigencia",
+    fecha_valuacion: str | pd.Timestamp = "2025-12-31",
+) -> pd.DataFrame:
+    """Calcula la RRC póliza por póliza mediante el método exacto (días por devengar)."""
+    faltantes = [c for c in [col_prima, col_inicio, col_fin] if c not in df]
+    if faltantes:
+        raise KeyError(f"Columnas no encontradas: {faltantes}")
+
+    out = df.copy()
+    inicio = pd.to_datetime(out[col_inicio], errors="raise")
+    fin = pd.to_datetime(out[col_fin], errors="raise")
+    val = pd.Timestamp(fecha_valuacion)
+
+    duracion_total = (fin - inicio).dt.days
+    if (duracion_total <= 0).any():
+        raise ValueError("La duración de vigencia debe ser estrictamente positiva.")
+
+    dias_no_devengados = (fin - val).dt.days.clip(lower=0)
+    proporcion_no_devengada = (dias_no_devengados / duracion_total).clip(lower=0.0, upper=1.0)
+
+    out["duracion_dias"] = duracion_total
+    out["dias_por_devengar"] = dias_no_devengados
+    out["proporcion_no_devengada_exacta"] = proporcion_no_devengada
+    out["rrc_exacto"] = pd.to_numeric(out[col_prima], errors="raise") * proporcion_no_devengada
+    return out
+
+
+def calcular_rrc_veinticuatroavos(
+    df: pd.DataFrame,
+    *,
+    col_prima: str = "prima_tarifa",
+    col_inicio: str = "inicio_vigencia",
+) -> pd.DataFrame:
+    """Calcula la RRC mediante el método de los veinticuatroavos ((2m - 1) / 24)."""
+    faltantes = [c for c in [col_prima, col_inicio] if c not in df]
+    if faltantes:
+        raise KeyError(f"Columnas no encontradas: {faltantes}")
+
+    out = df.copy()
+    inicio = pd.to_datetime(out[col_inicio], errors="raise")
+    mes = inicio.dt.month
+    factor_no_devengado = (2 * mes - 1) / 24.0
+
+    out["mes_emision"] = mes
+    out["factor_no_devengado_24avos"] = factor_no_devengado
+    out["rrc_24avos"] = pd.to_numeric(out[col_prima], errors="raise") * factor_no_devengado
+    return out
+
+
+def construir_triangulos_desarrollo(
+    df_siniestros: pd.DataFrame,
+    columnas_desarrollo: list[str] | None = None,
+    col_anio: str = "año",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Construye los triángulos incremental y acumulado de pagos por año de origen."""
+    if columnas_desarrollo is None:
+        columnas_desarrollo = [f"{i}_monto pagado_ajustada" for i in range(4)]
+    faltantes = [c for c in [col_anio, *columnas_desarrollo] if c not in df_siniestros]
+    if faltantes:
+        raise KeyError(f"Columnas no encontradas: {faltantes}")
+
+    tri_inc = (
+        df_siniestros.groupby(col_anio)[columnas_desarrollo]
+        .sum(min_count=1)
+        .sort_index()
+    )
+    tri_inc.columns = list(range(len(columnas_desarrollo)))
+    tri_cum = tri_inc.cumsum(axis=1).where(tri_inc.notna())
+    return tri_inc, tri_cum
+
+
+def calcular_sonr_chain_ladder(
+    tri_cum: pd.DataFrame,
+    *,
+    metodo_factores: str = "ponderado",
+) -> dict[str, object]:
+    """Proyecta el triángulo acumulado mediante Chain-Ladder y obtiene la SONR."""
+    if metodo_factores not in {"ponderado", "simple"}:
+        raise ValueError("metodo_factores debe ser 'ponderado' o 'simple'.")
+
+    n_dev = tri_cum.shape[1]
+    factores = []
+    for j in range(n_dev - 1):
+        pares = tri_cum[[j, j + 1]].dropna()
+        if metodo_factores == "ponderado":
+            f_j = pares[j + 1].sum() / pares[j].sum()
+        else:
+            f_j = (pares[j + 1] / pares[j]).mean()
+        factores.append(float(f_j))
+
+    proyectado = tri_cum.copy().astype(float)
+    for anio in proyectado.index:
+        for j in range(n_dev - 1):
+            if pd.isna(proyectado.loc[anio, j + 1]):
+                proyectado.loc[anio, j + 1] = proyectado.loc[anio, j] * factores[j]
+
+    diagonal = pd.Series(
+        [
+            tri_cum.loc[anio, tri_cum.loc[anio].last_valid_index()]
+            for anio in tri_cum.index
+        ],
+        index=tri_cum.index,
+        name="pagado_acumulado",
+    )
+    ultimate = proyectado[n_dev - 1].rename("siniestro_ultimo")
+    sonr = (ultimate - diagonal).rename("sonr")
+
+    resumen = pd.DataFrame({
+        "pagado_acumulado": diagonal,
+        "siniestro_ultimo": ultimate,
+        "sonr": sonr,
+    })
+
+    return {
+        "factores": factores,
+        "triangulo_proyectado": proyectado,
+        "resumen_anual": resumen,
+        "sonr_total": float(sonr.sum()),
+    }
